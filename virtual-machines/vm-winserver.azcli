@@ -1,0 +1,40 @@
+# Login no azure
+az login
+
+# Parametros
+rg=rg-winserver
+local=brazilsouth
+vm=winserver
+img=Win2022AzureEditionCore
+user=azureuser
+
+# Criar grupo de recursos
+az group create -n $rg -l $local
+
+# Criar a vm
+az vm create -g $rg -n $vm --image $img --admin-username $user --admin-password tr@inig1234567
+
+# Listar VMs
+az vm list -g $rg
+az vm list -g $rg -o yaml - mudando o output para yaml
+
+# Mostrar detalhes da VM
+az vm show -g $rg -n $vm
+az vm show -g $rg -o yaml - mudando o output para yaml
+az vm show -g $rg -n $vm --query "name" - mostrando detalho por query especifica
+az vm show -d -g $rg -n $vm --query publicIps -o tsv - -d forma detalhada o ip publico #191.232.184.13
+
+# Abrir porta 80 da VM
+az vm open-port --port 80 -g $rg -n $vm
+
+# Request no ip publico da vm
+curl 191.232.184.13
+
+# Instalar IIS web server
+az vm run-command invoke -g $rg -n $vm --command-id RunPowerShellScript --scripts "Install-WindowsFeature -name Web-Server -IncludeManagementTools"
+
+# Adicionar pagina customizada no IIS
+az vm run-command invoke -g $rg -n $vm --command-id RunPowerShellScript --scripts 'Set-Content -Path "C:\inetpub\wwwroot\iisstart.htm" -Value "Oi, Virtaul Machine"'
+
+# Excluir Grupo de recursos
+az group delete -n $rg -y / -y para confirmar a exclusao
