@@ -1,0 +1,5 @@
+# login no azure
+az login
+
+# criar storage account
+az storage account create -g az-storage -n nome-do-storage

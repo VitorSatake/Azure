@@ -1,0 +1,23 @@
+# Lista os containers no storage account
+az storage container list --account-name nome-do-storage-account -o table
+
+# Cria um container no storage account
+az storage container create -n nome-do-container --account-name nome-do-storage-account
+
+# Faz upload de arquivo para o container criado
+az storage blob upload --container-name nome-do-container --account-name nome-do-storage --name nome-que-deseja-do-arquivo --file caminho-do-arquivo-local
+
+# Lista o conteudo do blob storage
+az storage blob list --container-name nome-do-container --account-name nome-do-storage -o table
+
+# Verifica o url do conteudo do container
+az storage blob url --container-name nome-do-container --account-name nome-do-storage --name nome-do-arquivo
+
+# Muda a permissao para ter visibilidade anonima
+az storage
+
+# Desabilita / habilita acesso público ao stora account com false ou true
+az storage account update --allow-blob-public-access true --name MyStorageAccount
+
+# Muda a permissao do container 
+az storage container set-permission --name nome-do-container --public-access blob --account-name nome-do-storage

@@ -22,7 +22,7 @@ az vm list -g $rg -o yaml - mudando o output para yaml
 az vm show -g $rg -n $vm
 az vm show -g $rg -o yaml - mudando o output para yaml
 az vm show -g $rg -n $vm --query "name" - mostrando detalho por query especifica
-az vm show -d -g $rg -n $vm --query publicIps -o tsv - -d forma detalhada o ip publico #191.232.184.13
+az vm show -d -g $rg -n $vm --query publicIps -o tsv - -d forma detalhada o ip publico 
 
 # Abrir porta 80 da VM
 az vm open-port --port 80 -g $rg -n $vm
