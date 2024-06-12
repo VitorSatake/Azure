@@ -1,0 +1,5 @@
+# Login  no azure
+az login
+
+# Lista chaves de acesso do storage account
+az storage account keys list -g az-storage -n staragesatakecli
