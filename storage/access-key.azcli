@@ -2,4 +2,4 @@
 az login
 
 # Lista chaves de acesso do storage account
-az storage account keys list -g az-storage -n staragesatakecli
+az storage account keys list -g az-storage -n nome-do-storage
