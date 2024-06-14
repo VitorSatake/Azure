@@ -1,0 +1,58 @@
+# Logn no Azure
+az login
+
+# Paremetros gerais
+rg=rg-vnet
+local=brazilsouth
+
+# Parametros VNET
+vnetbr=vnet-brazilsouth
+vnetus=vnet-eastus2
+
+# Criar grupo de recursos
+az group create -n $rg -l $local
+
+# Criar redes virtuais
+az network vnet create -g $rg -n $vnetbr --address-prefixes 10.0.0.0/16 -l brazilsouth
+
+# Criar rede virtual e subnet
+az network vnet create -g $rg -n $vnetus --address-prefixes 20.0.0.0/16 --subnet-name snet-default --subnet-prefixes 20.0.0.0/24 -l eastus2
+
+## Listar rede virtuais
+az network vnet list
+az network vnet list -o table
+az network vnet list -g $rg -o yaml
+
+# Lstar redes vrtuas em uma subscripton com um determinado prefixo de endereço
+az network vnet list --query "[?contains(addressSpace.addressPrefixes, '10.0.0.0/16')]" -o table
+
+# Detalhar vnet
+az network vnet show -g $rg -n $vnetbr -o yaml
+
+# Atualzar dados da rede virtual
+az network vnet update --address-prefixes 30.0.0.0/16 -n $vnetbr -g $rg
+
+# Listar ips disponiveis na vnet
+az network vnet list-available-ips -g $rg -n $vnetbr
+
+# Criar subnet na vnet
+az network vnet subnet create -g $rg --vnet-name $vnetbr -n snet1 --address-prefixes 30.0.0.0/27
+az network vnet subnet create -g $rg --vnet-name $vnetbr -n snet2 --address-prefixes 30.0.1.0/27
+
+# Listar subnets na vnet
+az network vnet subnet list -g $rg --vnet-name $vnetbr -o table
+
+# Ver detalhes da subnet
+az network vnet subnet show -g $rg --vnet-name $vnetbr -n snet1 -o yaml
+
+# Lstar alguns ips disponiveis na subnet
+az network vnet subnet  list-available-ips -g $rg --vnet-name $vnetbr -n snet1
+
+# Atualizar subnet address prefxes
+az network vnet subnet update -n snet1 --vnet-name $vnetbr -g $rg --address-prefixes 30.0.5.0/27
+
+# Excluir uma subnet
+az network vnet subnet delete -n snet1 --vnet-name $vnetbr -g $rg
+
+# Excluir toda a vnet
+az network vnet delete -n $vnetbr -g $rg
