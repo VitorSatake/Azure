@@ -14,6 +14,7 @@ snetdb=snet-database
 # parametros vm gerais
 img=Win2019Datacenter
 sku=Standard_DS1_v2
+user=teste
 pass=tr@ining2024
 
 #parametros da vm da aplicação
@@ -23,8 +24,8 @@ ipapp=ip-app
 
 #parametros da vm do banco de dados
 vmdb=vm-db
-nicapp=nic-db
-ipad=ip-db
+nicdb=nic-db
+ipdb=ip-db
 
 
 # Criar grupo de recursos
@@ -52,7 +53,7 @@ az vm create -g $rg -n $vmapp --image $img --siza $sku --admin-username $user --
 az network public-ip create -g $rg -n $ipdb --sku Standard -l $local
 
 # criar vm do banco de dados - nic
-az network nic create -g $rg -n $nidb --vnet-name $vnet --subnet $snetdb --public-ip-address $ipdb
+az network nic create -g $rg -n $nicdb --vnet-name $vnet --subnet $snetdb --public-ip-address $ipdb
 
 # criar vm do banco de dados
 az vm create -g $rg -n $vmdb --image $img --siza $sku --admin-username $user --admin-password $pass --nics $nicdb
@@ -88,3 +89,13 @@ az network nsg rule create -g $rg --nsg-name $nsg -n LiberarPorta80 \
 
 # Excluir liberação porta 80 - internet
 az network nsg rule delete -g $rg --nsg-name $nsg -n LiberarPorta80
+
+# liberar porta 80 apenas no ip da vm de aplicação
+az network nsg rule create -g $rg --nsg-name $nsg -n LiberarPorta80App \
+    --directon Inbound --priority 101 --source-address-prefixes '*' \
+    --source-port-ranges '*' --destination-address-prefixes '10.0.0.4' \
+    --destination-port-ranges 80 --access Allow \
+    --protocol Tcp --description "Expor porta 80 - http - apenas da vm da aplicação"
+
+# excluir resource group
+az group delete -n $rg -y --no-wait
