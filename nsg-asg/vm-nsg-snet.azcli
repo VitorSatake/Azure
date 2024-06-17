@@ -1,0 +1,90 @@
+# login no azure
+az login
+
+# Parametros gerais
+rg=rg-nsg-appdd
+local=brazilsouth
+
+# Parametros rede virtual
+nsg=nsg-appdb
+vnet=vnet-appdb
+snetapp=snet-application
+snetdb=snet-database
+
+# parametros vm gerais
+img=Win2019Datacenter
+sku=Standard_DS1_v2
+pass=tr@ining2024
+
+#parametros da vm da aplicação
+vmapp=vm-app
+nicdb=nic-app
+ipapp=ip-app
+
+#parametros da vm do banco de dados
+vmdb=vm-db
+nicapp=nic-db
+ipad=ip-db
+
+
+# Criar grupo de recursos
+az group create -n $rg -l $local
+
+# criar network security group
+az network nsg create -g $rg -n $nsg
+
+# criar vnet e subnet da aplicação
+az network vnet create -g $rg -n $vnet --address-prefixes 10.0.0.0/16 --subnet-name $snetapp --subnet-prefixes 10.0.0.0/24 --network-security-group $nsg
+
+# criar subnet para vm do banco de dados
+az network vnet subnet create -g $rg -n $snetdb --vnet-name $vnet --address-prefixes 10.0.1.0/24 --network-security-group $nsg
+
+# criar vm da aplicaçao - ip publico
+az network public-ip create -g $rg -n $ipapp --sku Standard -l $local
+
+# criar vm da aplicaçao - nic
+az network nic create -g $rg -n $nicapp --vnet-name $vnet --subnet $snetapp --public-ip-address $ipapp
+
+# criar vm da aplicação
+az vm create -g $rg -n $vmapp --image $img --siza $sku --admin-username $user --admin-password $pass --nics $nicapp
+
+# criar vm do banco de dados- ip publico
+az network public-ip create -g $rg -n $ipdb --sku Standard -l $local
+
+# criar vm do banco de dados - nic
+az network nic create -g $rg -n $nidb --vnet-name $vnet --subnet $snetdb --public-ip-address $ipdb
+
+# criar vm do banco de dados
+az vm create -g $rg -n $vmdb --image $img --siza $sku --admin-username $user --admin-password $pass --nics $nicdb
+
+# criar nsg rule para liberar rdp nas vms
+az network nsg rule create -g $rg --nsg-name $nsg -n PermiteAcessoRDP \
+    --directon Inbound --priority 100 --source-address-prefixes '*' \
+    --source-port-ranges '*' --destination-address-prefixes '*' \
+    --destination-port-ranges 3389 --access Allow \
+    --protocol Tcp --description "Permite acesso a porta 3389 - rdp inbound"
+
+# instalar web server iis nas vms - vm da aplicação
+az vm run-command invoke -g $rg -n $vmapp --command-id RunPowerShellScript --scripts "Install-WindowsFeature -name Web-Server -IncludeManagementTools" 
+az vm run-command invoke -g $rg -n $vmapp --command-id RunPowerShellScript --scripts 'Set-Content -Path "C:\inetpub\wwwroot\iisstart.htm" -Value "Oi, virtual machine aplicação"'
+
+# instalar web server iis nas vms - vm do banco de dados
+az vm run-command invoke -g $rg -n $vmdb --command-id RunPowerShellScript --scripts "Install-WindowsFeature -name Web-Server -IncludeManagementTools" 
+az vm run-command invoke -g $rg -n $vmdb --command-id RunPowerShellScript --scripts 'Set-Content -Path "C:\inetpub\wwwroot\iisstart.htm" -Value "Oi, virtual machine do banco de dados"'
+
+# bloquear acesso entre vm database para aplicação
+az network nsg rule create -g $rg --nsg-name $nsg -n BloquearDatabaseAppHttp \
+    --directon Inbound --priority 900 --source-address-prefixes '10.0.1.4' \
+    --source-port-ranges '*' --destination-address-prefixes '10.0.0.4' \
+    --destination-port-ranges 80 --access Deny \
+    --protocol Tcp --description "Bloquear acesso da vm database para a vm aplicação na porta 80 - http"
+
+# liberar porta 80 - internet
+az network nsg rule create -g $rg --nsg-name $nsg -n LiberarPorta80 \
+    --directon Inbound --priority 101 --source-address-prefixes '*' \
+    --source-port-ranges '*' --destination-address-prefixes '*' \
+    --destination-port-ranges 80 --access Allow \
+    --protocol Tcp --description "Expor porta 80 - http"
+
+# Excluir liberação porta 80 - internet
+az network nsg rule delete -g $rg --nsg-name $nsg -n LiberarPorta80
